@@ -1,0 +1,4 @@
+numpy<2.0.0
+pandas==1.5.3
+google-auth==2.22.0
+requ  # Required for production deployment
