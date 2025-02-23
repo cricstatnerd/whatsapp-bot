@@ -5,7 +5,4 @@ requests
 gspread
 oauth2client
 Flask
-requests
-datetime
-random
 gunicorn  # Required for production deployment
