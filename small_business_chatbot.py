@@ -28,21 +28,20 @@ model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 # Function to fetch FAQs from Google Sheets
 def fetch_faqs():
     response = requests.get(FAQ_SHEET_URL)
-    if response.status_code == 200:
-        try:
-            data = response.json()
-            if isinstance(data, dict) and "faqs" in data:
-                return data["faqs"]  # Ensure it's a list of FAQs
-            elif isinstance(data, list):
-                return data  # Already a list of FAQs
-            else:
-                print("Unexpected FAQ data format:", data)
-                return []
-        except json.JSONDecodeError:
-            print("Error parsing JSON response")
+    
+    try:
+        data = response.json()
+        
+        # If the data does not contain expected FAQ keys
+        if "faqs" not in data:
+            print("⚠️ Unexpected FAQ data format:", data)
             return []
-    print("Failed to fetch FAQs, status code:", response.status_code)
-    return []
+        
+        return data["faqs"]  # Assuming FAQs are stored under 'faqs' key
+
+    except json.JSONDecodeError:
+        print("⚠️ Failed to decode FAQ JSON response:", response.text)
+        return []
 
 # Function to find the best matching FAQ
 def find_best_faq(query, faqs):
@@ -61,25 +60,15 @@ def find_best_faq(query, faqs):
 
 # Function to get AI-generated response from Hugging Face
 def generate_ai_response(query):
-    api_url = "https://api-inference.huggingface.co/models/facebook/blenderbot-400M-distill"
+    api_url = "https://api-inference.huggingface.co/models/facebook/blenderbot-90M"
     headers = {"Authorization": f"Bearer {HF_API_KEY}"}
     payload = {"inputs": query}
 
     response = requests.post(api_url, headers=headers, json=payload)
-
-    if response.status_code == 200:
-        try:
-            response_data = response.json()
-            if isinstance(response_data, list) and "generated_text" in response_data[0]:
-                return response_data[0]['generated_text']
-            else:
-                print("Unexpected AI response format:", response_data)
-                return "AI response error. Please try again."
-        except json.JSONDecodeError:
-            print("Error parsing AI response")
-            return "AI response error. Please try again."
-    else:
-        print(f"AI API Error {response.status_code}: {response.text}")
+    
+    try:
+        return response.json()[0]['generated_text']
+    except (IndexError, KeyError):
         return "I'm not sure, but I'll get back to you!"
 
 # Function to log leads to Google Sheets
