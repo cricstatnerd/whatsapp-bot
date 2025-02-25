@@ -29,7 +29,19 @@ model = SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')
 def fetch_faqs():
     response = requests.get(FAQ_SHEET_URL)
     if response.status_code == 200:
-        return response.json()
+        try:
+            data = response.json()
+            if isinstance(data, dict) and "faqs" in data:
+                return data["faqs"]  # Ensure it's a list of FAQs
+            elif isinstance(data, list):
+                return data  # Already a list of FAQs
+            else:
+                print("Unexpected FAQ data format:", data)
+                return []
+        except json.JSONDecodeError:
+            print("Error parsing JSON response")
+            return []
+    print("Failed to fetch FAQs, status code:", response.status_code)
     return []
 
 # Function to find the best matching FAQ
@@ -54,9 +66,21 @@ def generate_ai_response(query):
     payload = {"inputs": query}
 
     response = requests.post(api_url, headers=headers, json=payload)
+
     if response.status_code == 200:
-        return response.json()[0]['generated_text']
-    return "I'm not sure, but I'll get back to you!"
+        try:
+            response_data = response.json()
+            if isinstance(response_data, list) and "generated_text" in response_data[0]:
+                return response_data[0]['generated_text']
+            else:
+                print("Unexpected AI response format:", response_data)
+                return "AI response error. Please try again."
+        except json.JSONDecodeError:
+            print("Error parsing AI response")
+            return "AI response error. Please try again."
+    else:
+        print(f"AI API Error {response.status_code}: {response.text}")
+        return "I'm not sure, but I'll get back to you!"
 
 # Function to log leads to Google Sheets
 def log_to_google_sheets(phone_number, query, response_text, lead_score, assigned_employee):
