@@ -6,3 +6,6 @@ gspread
 oauth2client
 Flask
 gunicorn  # Required for production deployment
+torch
+transformers
+accelerate
