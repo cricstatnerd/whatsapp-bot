@@ -9,3 +9,4 @@ gunicorn  # Required for production deployment
 torch
 transformers
 accelerate
+sentence-transformers  # Added for FAQ matching
